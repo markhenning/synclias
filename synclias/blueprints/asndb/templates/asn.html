@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+<br>
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-11">
+			<h1>
+				ASNs
+			</h1>
+			<p>
+        ASNs are groups of networks that are managed by a single company<br>
+        WARNING: Adding huge ASNs (Like Amazon or Google) really isn't recommended, it's more likely to break more things
+			</p>
+			<h3>
+				ASN Lookup
+			</h3>
+		</div>
+		<div class="col-md-1">
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-8">
+      <form action="{{url_for('asns.page')}}" method="post">
+        <table class="table" border="1">
+          <tr> {{ lookup_asn_form.hidden_tag() }}
+            <td>{{ lookup_asn_form.target.label }}</td>
+            <td>
+              {{ lookup_asn_form.target(size=32,class="form-control") }}  
+              {% for error in lookup_asn_form.target.errors %}
+              <span style="color: red;">[{{ error }}]</span>
+              {% endfor %}
+            </td>
+          <!-- <td><input type="text" id="asn-lookup" class="form-control" name="asn-lookup" placeholder="ns1.site.lan" /></td> -->
+          <td>
+            <!-- <button submit data-bs-toggle="modal" data-bs-target="#lookup-asn-modal" id="lookup-button" onclick="disable_add_button()" class="btn btn-success">Lookup</button></td> -->
+            <button submit id="lookup-button" class="btn btn-success">Lookup</button></td>
+          </tr>
+        </table>
+      </form>
+		</div>
+		<div class="col-md-3">
+		</div>
+		<div class="col-md-1">
+		</div>
+	</div>
+  <div class="row">
+    <div class="col-md-12">
+		 <table class="table" border="1">
+            <tr>Legal Note: The ASN DB Data is provided by RouteViews<br> </tr>
+            <tr>This data is licensed by the Creative Commons v4 with Attribution license </tr>
+            <tr>visible at <a href="https://creativecommons.org/licenses/by/4.0/.">Creative Commons Org</a><br></tr>
+            <tr><a href="https://www.routeviews.org">RouteViews Project Website</a></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="row">
+		<div class="col-md-7">
+      <br>
+      <h3>VPN Routed ASNs</h3>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#add-asn-modal">
+        Add ASN
+      </button>
+    </div>
+  </div>
+
+  <br>
+  <div class="row">
+		<div class="col-md-8">
+          <table class="table" border="1">
+        <thead>
+          <tr>
+            <th>ASN</th>
+            <th>Comment</th>
+            <th colspan="2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for asn in asns %}
+          <tr>
+            <!-- <td>{{ asn.id }}</td> -->
+            <td>{{ asn.asn }}</td>
+             <td>{{ asn.comment }}</td>
+            <td><button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete-asn-modal_{{ asn.id}}">Delete</button></td>
+        
+            <!-- Modal for deleting a asn -->
+            <div class="modal fade" id="delete-asn-modal_{{ asn.id}}" tabindex="-1" aria-labelledby="delete-asn-modal-label" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="delete-asn-modal-label">Delete ASN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <form action="{{url_for('asns.delete', id=asn.id)}}" method="post">
+                    <div class="modal-body">
+                      <div class="form-group row">
+                        <label class="col-sm-12 col-form-label">Do you want to delete the asn <spa style='font-weight:bold;color:red'>{{asn.asn}}</span>?</label>
+                      </div>
+                      </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- End Modal-->
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-3">
+    </div>
+		<div class="col-md-1">
+    </div>
+  </div>
+</div>
+
+ <!-- Modal for Adding Single ASN-->
+  <div class="modal fade" id="add-asn-modal" tabindex="-1" aria-labelledby="add-asn-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="add-asn-modal-label">Add ASN</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{{url_for('asns.create')}}" method="post">
+          {{ add_asn_form.hidden_tag() }}
+          <div class="modal-body">
+            <div class="form-group row">
+              <table>
+                <tr>
+                  {{ add_asn_form.asn.label }}
+                  {{ add_asn_form.asn(size=32,class="form-control") }}  
+                  {% for error in add_asn_form.asn.errors %}
+                  <span style="color: red;">[{{ error }}]</span>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {{ add_asn_form.comment.label }}
+                  {{ add_asn_form.comment(size=32,class="form-control") }}
+                  {% for error in add_asn_form.comment.errors %}
+                  <span style="color: red;">[{{ error }}]</span>
+                  {% endfor %}
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Modal End: Add ASN-->
+
+  <!-- Modal for looking up a website's ASN -->
+  <div class="modal fade" id="lookup-asn-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="lookup-asn-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="container">  
+            <div class="row">
+              <div class="col-auto me-auto">
+                <h5 class="modal-title" id="lookup-url-modal-label">Lookup ASNs</h5>
+              </div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="dismiss-button">Cancel</button>
+                <button type="submit" form="submit-asn" id="add-asn-modal-button" class="btn btn-success" >Add ASN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div><p></p></div>
+          <!-- Placeholder to be replaced with status/results form -->
+          <div id="asn-results"></div>
+        </div>
+        <div class="modal-footer">
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Modal-->
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+
+    {% if start_lookup %}
+      <script>
+        console.log("Got here by post and start_lookup")
+        $(document).ready(function(){
+          disable_add_button()
+          $("#lookup-asn-modal").modal('show');
+          trigger_lookup()
+        });
+      </script>
+    {% endif %}
+
+    <script>
+      function clear_data(){
+        $('#asn-results').replaceWith('<div id="asn-results"></div');
+        $('#add-asn-modal-button').prop('disabled', true);
+      }
+
+      function trigger_lookup() {
+            
+        div = $('<div class="spinner-border text-primary" role="status"> <span class="visually-hidden">Loading...</span></div>');
+        $('#asn-results').append(div);
+
+        var site_url = document.getElementById("target").value;
+        var lookup_url = '/asn/find/';
+        var data =  JSON.stringify({ "site": site_url });
+        console.log("Sending " + data)
+        
+        fetch('/asn/find/', {
+          method: 'POST',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          },
+          body: data
+        })
+        .then((response) => {
+
+          if (response.ok) {
+            return response.json();
+          }
+          return Promise.reject(response); 
+        })
+
+        .then(response => {
+
+          asn_results_start = '<div id="asn-results">';
+
+          if (data['scan_rcode'] >= 400) {
+            warning = '<div class="bg-danger text-white">WARNING: ASN DB Missing, please download it and try again</br></div>';
+          } else {
+            warning = '';
+          }
+          table_start = '<form id="submit-asn" action="{{url_for("asns.create")}}" method="post"><table class="table" border="1">';
+
+          // Yes, all this is truly horrible, I should be passing the labels and looping
+          
+          table_rows = '';
+          table_rows = table_rows + '<input type="hidden" id="asn" name="asn" value="' + response['asn'] + '">';
+          table_rows = table_rows + '<input type="hidden" id="comment" name="comment" value="' + response['asn_name'] + '">';
+          table_rows = table_rows + '<tr>';
+          table_rows = table_rows + '  <td> ASN </td>';
+          table_rows = table_rows + '  <td><label for="' + response['asn'] + '">' + response['asn'] + '</label></td>';
+          table_rows = table_rows + '</tr><tr>';
+          table_rows = table_rows + '  <td> ASN Name </td>';
+          table_rows = table_rows + '  <td>' + response['asn_name'] + '</td>';
+          table_rows = table_rows + '</tr><tr>';
+          table_rows = table_rows + '  <td> URL Subnet </td>';
+          table_rows = table_rows + '  <td>' + response['bgp'] + '</td>';
+          table_rows = table_rows + '</tr><tr>';
+          table_rows = table_rows + '  <td> ASN Subnet Count</td>';
+          table_rows = table_rows + '  <td>' + response['subnet_count'] + '</td>';
+          table_rows = table_rows + '</tr><tr>';
+          table_rows = table_rows + '  <td> ASN IP Address Count</td>';
+          table_rows = table_rows + '  <td>' + response['asn_ip_count'] + '</td>';
+          table_rows = table_rows + '</tr>';
+
+          table_end = '</table></form>';
+
+          asn_results_end = '<div>'
+
+          // Turn the safety on if needed
+          if (response['subnet_count'] > 20 || response['asn_ip_count'] > 50000 ){
+            warning = '<div class="bg-warning text-black">WARNING: This is a large number of IPs</br>It will probably cause unknown sites to go over the VPN<br></div>';
+            warning = warning + '';
+
+            warning = warning + '<div class="bg-danger text-white">I understand, unlock the button';
+            warning = warning + '<div class="form-check form-switch">';
+            warning = warning + '<input class="form-check-input" type="checkbox" id="safetycatch" name="safetycatch" onclick="safety_catch(this)" value="">';
+            warning = warning + '</div></div>';
+            
+          } else {
+            $('#add-asn-modal-button').prop('disabled', false);
+          }
+
+          // $('#add-asn-modal-button\=').prop('disabled', false);
+          modal_contents = asn_results_start + warning + table_start + table_rows + table_end + asn_results_end;
+
+          $('#asn-results').replaceWith(modal_contents);
+
+          // //$('#asn-results').append("Hello");
+          // console.log("Completed")
+        }).catch((err) => {
+          console.log(err);
+          $('#asn-results').replaceWith('<div id="asn-results"><div class="bg-danger text-white">WARNING: Supplied text did not resolve</br></div>');
+        });  
+      }
+
+      function safety_catch(checkbox){
+        if(safetycatch.checked) {
+          $('#add-asn-modal-button').prop('disabled', false);
+        } else {
+          $('#add-asn-modal-button').prop('disabled', true);
+        }
+      };
+
+      function disable_add_button(){
+        $('#add-asn-modal-button').prop('disabled', true);
+      }
+
+      $(function() {
+        // $('#lookup-button').click(trigger_lookup);
+        $('#dismiss-button').click(clear_data);
+
+      });
+    </script>
+
+{% endblock %}

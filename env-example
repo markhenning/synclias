@@ -1,0 +1,7 @@
+MARIADB_USERNAME=<any username you like>
+MARIADB_PASSWORD=<any password you like>
+MARIADB_DATABASE=synclias
+SECRET_KEY=<< long secret key >>
+ENCRYPTION_KEY=<< 32 char, url safe string (use a generator, 32 chars, upper,lower,numbers>>
+CONFIG_TYPE=ProductionConfig
+#CLEAR_ADMIN=False

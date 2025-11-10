@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark" >
+    <head>
+        {% block head %}
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        {% block styles %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+        {% endblock %}
+        
+        {% endblock %}
+
+    </head>
+    <body>
+ 
+        <nav class="navbar navbar-expand-sm bg-body-tertiary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand">Synclias</a>
+            {% if current_user.is_anonymous %}
+            {% else %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" >
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="{{url_for('scanner.page')}}">Scanner</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="{{url_for('sites.site')}}">Sites</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="{{url_for('keywords.page')}}">Keywords</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="{{url_for('asns.page')}}">ASNs</a>
+                </li>
+                <!-- <li class="nav-item">
+                <a class="nav-link" href="{{url_for('history.page')}}">History</a>
+                </li> -->
+                <li class="nav-item">
+                <a class="nav-link active" href="{{url_for('core.settings')}}">Settings</a>
+                </li>
+                 <li class="nav-item dropdown">
+
+                      <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                        History
+                        </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="nav-link" href="{{url_for('history.page')}}">Sync History</a></li>
+                        <li><a class="nav-link" href="{{url_for('ip_history.page')}}">IP Tracking</a></li>
+                    </ul>
+                </li>
+
+                <li></li>
+            </ul>
+            </div>
+                
+                <div class="col-12 col-lg-auto">
+                    <a href="{{url_for('auth.logout')}}" class="btn btn btn-outline-primary my-2 my-sm-0">Logout</a>
+                    <button class="btn btn-primary my-2 my-sm-0" id="start-sync">Sync</button>
+                </div>
+            </div>
+            {% endif %}
+        </nav>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+                <div class="alert alert-warning">
+                {% for message in messages %}
+                    <li class="list-group-item"></li>
+                        {{message}}
+                    </li>
+                {% endfor %}    
+                </div>
+                <!-- <li>{{ message }}</li> -->
+            </ul>
+        {% endif %}
+        {% endwith %}
+
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="syncToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+                <div class="toast-header">
+                <strong class="me-auto">Sync</strong>
+                <small>Running</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <div id="sync-status"></div>
+                </div>
+            </div>
+        </div>
+
+        {% block content %}
+ 
+        <!-- Your page content -->
+        {% endblock %}
+
+        {% block scripts %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
+        <script>
+            function setCookie(cname, cvalue) {
+                document.cookie = cname + "=" + cvalue;
+            }
+            
+            function getCookie(cname) {
+                let name = cname + "=";
+                let decodedCookie = decodeURIComponent(document.cookie);
+                let ca = decodedCookie.split(';');
+                for(let i = 0; i <ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            }
+                            
+            function checkSyncCookies() {
+                status_url = getCookie("SyncTask");
+                if (status_url != ""){
+                    console.log("Running Synctask: " + status_url);
+
+                    // Flagged a running task, go get the status:
+                    $.getJSON(status_url, function(data) {
+                        console.log("Checking task")
+                        console.log(data)
+
+                        if (data['state'] == 'PENDING' || data['state'] == 'PROGRESS') {
+                            console.log("Task is progressing")
+                            const toastLiveExample = document.getElementById('syncToast');
+                            const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
+                            toastBootstrap.show();
+                            div = $('<div id="sync-status"><div><div>Picking up Sync....</div></div><cr></cr><div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" id="sync-progress" role="progressbar" style="width: 0%"></div></div></div></div>');
+                            $('#sync-status').replaceWith(div);
+
+                            update_progress(status_url, div[0]);
+                        } else {
+                            // Not running anymore, clear the cookie
+                            setCookie("SyncTask","")
+                        }
+                    })
+
+                } else {
+                    console.log("No cookie for synctask");
+                }
+            }
+               
+            $(function() {
+                console.log( "ready!" );
+                checkSyncCookies();
+            });
+
+            function trigger_sync() {
+                console.log("sync triggered!")
+
+                const toastLiveExample = document.getElementById('syncToast');
+                const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
+                toastBootstrap.show();
+
+                // add task status elements
+                div = $('<div id="sync-status"><div><div>Syncing....</div></div><cr></cr><div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" id="sync-progress" role="progressbar" style="width: 0%"></div></div></div></div>');
+                $('#sync-status').replaceWith(div);
+
+                // send ajax POST request to start background job
+                $.ajax({
+                    type: 'POST',
+                    url: "{{url_for('syncer.sync')}}",
+                    success: function(data, status, request) {
+                        status_url = request.getResponseHeader('Location');
+                        setCookie("SyncTask",status_url);
+                        update_progress(status_url, div[0]);
+                    },
+                    error: function() {
+                        alert('Unexpected error');
+                    }
+                });
+            }
+            function update_progress(status_url, status_div) {
+                // send GET request to status URL
+                $.getJSON(status_url, function(data) {
+                    // update UI
+                    step = "Step: " + data['current'] + '/' + data['total'] + " - " + data['status'];
+                    percent = parseInt(data['subtask_current'] * 100 / data['subtask_total']);
+                    document.getElementById('sync-progress').style = "width: "+ percent +"%";
+                    console.log(percent);
+                    $(status_div.childNodes[0]).text(step);
+                    if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+                        if ('result' in data) {
+                            // show result
+                            $(status_div.childNodes[3]).text('Result: ' + data['result']);
+                            setTimeout(function() {
+                                const toastLiveExample = document.getElementById('syncToast');
+                                const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
+                                toastBootstrap.hide();
+                            }, 3000);
+                        }
+                        else {
+                            // something unexpected happened
+                            $(status_div.childNodes[3]).text('Result: ' + data['state']);
+                        }
+                    }
+                    else {
+                        // rerun in 2 seconds
+                        setTimeout(function() {
+                            update_progress(status_url, status_div);
+                        }, 500);
+                    }
+                });
+            }
+
+
+            $(function() {
+                $('#start-sync').click(trigger_sync);
+            });
+        </script>
+        {% endblock %}
+    </body>
+</html>

@@ -1,0 +1,1 @@
+docker run --detach --name mariadb-testing -e MARIADB_RANDOM_ROOT_PASSWORD=1 -e MARIADB_USER=testing --env MARIADB_PASSWORD=testing --env MARIADB_DATABASE=synclias -p 3307:3306 -d mariadb:lts-ubi9

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+    </br>
+<h1>IP Tracking History</h1>
+    </br>
+<div>If you are expecting a site to be here that isn't:</div>
+<ul>
+<li>Is it listed on the Sites page? (it must be)</li>
+<li>AND either:
+<ul>
+<li>"Collect DNS History for All Sites?" needs to be on</li>
+</ul>
+</li>
+<li>OR
+<ul>
+<li>The site selected for tracking on the Sites page</li>
+</ul>
+</li>
+</ul>
+
+<div>Sites discovered during scans are not automatically tracked</div>
+<div>&nbsp;</div>
+<div><strong>Note</strong>: Old records may still be present, even if not used.</div>
+<div>They will be cleared when they reach the age set in Settings</div>
+    </br>
+{% if ip_history is defined %}
+<div class="row">
+    <div class="col-md-8">
+        <table class="table table-striped" border="1">
+            <thead>
+                <td>FQDN</td>
+                <td>IP Type</td>
+                <td>Record</td>
+                <td>Last Seen</td>
+            </thead>
+            <tbody>
+                {% for record in ip_history %}
+                <tr>
+                <td>{{ record.fqdn }}</td>
+                <td>{{ record.record_type }}</td>
+                <td>{{ record.record }}</td>
+                <td>{{ record.last_seen }}</td>
+                {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<br>
+<h3>No IP Tracking records exist</h3>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ super() }}
+
+{% endblock %}

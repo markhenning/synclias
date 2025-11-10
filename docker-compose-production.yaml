@@ -1,0 +1,112 @@
+services:
+  redis:
+    env_file:
+      - .env
+    image: redis:latest
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    stop_grace_period: ${DOCKER_STOP_GRACE_PERIOD:-3s}
+    volumes:
+      - redis:/data
+  web:
+    image: registry.home.mcsmiggins.com/synclias:latest
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    stop_grace_period: ${DOCKER_STOP_GRACE_PERIOD:-3s}
+    links:
+      - db
+      - redis
+      - worker
+      - celery_beat
+    volumes:
+      - app_shared:/app/shared
+  worker:
+    image: registry.home.mcsmiggins.com/synclias:latest
+    command: /app/start-celeryworker.sh
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    links:
+      - redis
+      - db
+    volumes:
+      - app_shared:/app/shared
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    stop_grace_period: ${DOCKER_STOP_GRACE_PERIOD:-3s}
+  celery_beat:
+    image: registry.home.mcsmiggins.com/synclias:latest
+    command: /app/start-celerybeat.sh
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    links:
+      - db
+      - redis
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    stop_grace_period: ${DOCKER_STOP_GRACE_PERIOD:-3s}
+    volumes:
+      - app_shared:/app/shared
+  db:
+    image: mariadb:lts-ubi9
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1024M
+    restart: always
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_RANDOM_ROOT_PASSWORD=1
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+    expose:
+      - 3306
+volumes:
+  redis: {}
+  db_data: null
+  app_shared: null
+networks:
+  redis_net: null
+  db_net: null

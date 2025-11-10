@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+    <!-- Modal for Adding Excluded Keyword-->
+    <div class="modal fade" id="add-keyword-modal" tabindex="-1" aria-labelledby="add-keyword-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="add-keyword-modal-label">Add Safety Keyword</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="{{url_for('keywords.page')}}" method="post">
+            {{ add_keyword_form.hidden_tag() }}
+            <div class="modal-body">
+              <div class="form-group row">
+                {{ add_keyword_form.keyword.label }}
+                <div class="col-xs-10">
+                    {{ add_keyword_form.keyword(size=32,class="form-control") }}
+                  
+                    {% for error in add_keyword_form.keyword.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <hr>
+                <div class="form-group row">
+                    <div class="form-check form-switch">
+                    <!-- <div class="col-xs-10"> -->
+                        <p>{{ add_keyword_form.exact.label }} {{ add_keyword_form.exact(class="form-check-input") }} </p>
+                    <!-- </div> -->
+                    </div>
+                  </div>
+                </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-success">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- Modal End: Add Keyword-->
+      
+      <!-- Main Page Content Start -->
+    </br>
+    <h1>Safety Keywords</h1>
+
+      <div class="row">
+
+        </div>
+        <div class="row">
+
+
+          <div class="col-md-4">
+            <form id="select-keywords" action="{{url_for('keywords.delete_bulk')}}" method="post">
+            <table class="table table-striped" border="1">
+              <thead>
+                <tr>
+                  <th colspan="1">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="" onclick=toggle_selection(this.id,this.checked) name="check-all" id="check-all">
+                        <label class="form-check-label" for="flexCheckDefault"></label>
+                    </div>
+                  </th>
+                  <th>Keyword</th>
+                  <th colspan="1"> Exact Match?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for safety_keyword in safety_keywords %}
+                <tr>
+                  <td>
+                     <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="" name="select-{{safety_keyword.id}}" id="select-{{safety_keyword.id}}">
+                        <label class="form-check-label" for="flexCheckDefault"></label>
+                    </div>
+                  </td>
+                  <td>{{ safety_keyword.keyword }}</td>
+
+                  <td>
+                      <div class="form-check form-switch">
+                      {% if safety_keyword.exact is true %}
+                      <input class="form-check-input" type="checkbox" onclick="toggle_exact_match(this.id, this.checked)" name="exact-{{ safety_keyword.id }}" id="exact-{{ safety_keyword.id }}" checked="checked">
+                      {% else %}
+                      <input class="form-check-input" type="checkbox" onclick="toggle_exact_match(this.id, this.checked)" name="exact-{{ safety_keyword.id }}" id="exact-{{ safety_keyword.id }}" >
+                      {% endif %}
+                      </div>
+                  </td>
+              
+                  <!-- Modal for deleting a site - required here to make all the ids line up-->
+                  <div class="modal fade" id="deleteKeywordModal_{{ safety_keyword.id}}" tabindex="-1" aria-labelledby="deleteKeywordModal-label" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="deleteKeywordModal-label">Delete Keyword</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{url_for('keywords.delete', id=safety_keyword.id)}}" method="post">
+                          <div class="modal-body">
+                            <div class="form-group row">
+                              <label class="col-sm-12 col-form-label">Do you want to delete the keyword <spa style='font-weight:bold;color:red'>{{safety_keyword.keyword}}</span>?</label>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                <!-- End Modal-->
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </form>
+
+        </div>
+        <div class="col-md-4 ">
+          <table>
+              <tr>
+                <nav aria-label="..."> 
+                  <ul class="pagination ">
+                    <li class="page-item  {{'disabled' if not prev_url}}">
+                      <a class="page-link" href="{{ prev_url }}">Prev</a>
+                    </li>
+
+                    {% for page_no in range(safety_keywords.pages) %}
+                      {% if loop.index == safety_keywords.page %}
+                        <li class="page-item active"> <span class="page-link"> {{ loop.index }} </span> </li>
+                      {% else %}
+                        <li class="page-item" ><a class="page-link" href="{{ url_for('keywords.page', page_id= loop.index) }}">{{ loop.index }}</a></li>
+                      {% endif%}
+                    {% endfor %}
+                    <li class="page-item  {{'disabled' if not next_url}}">
+                      <a class="page-link" href="{{ next_url }}">Next</a>
+                    </li>
+                  </ul>
+                </nav>
+          
+              </tr>
+              <tr>
+                <button type="button" class="btn btn-success text-right" data-bs-toggle="modal" data-bs-target="#add-keyword-modal">
+                Add Keyword
+                </button>
+              </tr>
+              <tr><br><br></tr>
+              <tr>              
+                  <button type="submit" form="select-keywords" class="btn btn-danger">Delete Selected</button>
+              </tr>
+              <tr><br><br></tr>
+              <tr>
+                  <form action="{{url_for('keywords.keyword_add_suggestions')}}" method="post">
+                    <button input type = submit class="btn btn-primary" id="change-admin-pass"> Import Suggestions </button>
+                  </form>
+              </tr>
+            </table>
+          </div>
+
+      </div>
+      <!-- Main Page Content End -->
+{% endblock %}
+
+{% block scripts %}
+
+    {{ super() }}
+
+
+
+    <script>
+
+      // checkbox for "select all"
+      function toggle_selection(id,checked){
+        $("[name^='select-']").each(function(){
+          this.checked = checked
+        })
+      }
+
+      function toggle_exact_match(id,state){
+        const splitArray = id.split("-");
+        if (state == true){
+          state_int = 1;
+        } else {
+          state_int = 0;
+        }
+
+        url = "/keyword/exact/";
+        url = url + splitArray[1] + "/" + state_int;
+
+        $.ajax({
+          type: 'PUT',
+          url: url, 
+        });
+      }
+      </script>
+
+{% endblock %}

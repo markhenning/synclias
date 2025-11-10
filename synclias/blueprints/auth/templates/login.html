@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+<br>
+<div class="content">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6 contents">
+          <div class="row justify-content-center">
+            <div class="col-md-12">
+              <div class="form-block">
+                  <div class="mb-4">
+                  <h3>Log In to <strong>Synclias</strong></h3>
+                  <p class="mb-4"></p>
+                </div>
+                <form action="" method="post" novalidate>
+                   {{ form.hidden_tag() }}
+                   <div class="form-group last mb-4">
+                    <p>
+                        {{ form.password.label }}<br>
+                        {{ form.password(size=32,class="form-control") }}<br>
+                        {% for error in form.password.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                        {% endfor %}
+                    </p>
+                  </div>       
+                  <div class="d-flex mb-5 align-items-center">
+                    <div>
+                      <div class="form-group row">
+                        <div class="form-check form-switch">
+                        <p>{{ form.remember_me(class="form-check-input") }} {{ form.remember_me.label }}</p>
+                        </div>
+                      </div>
+                    <div class="ml-auto "><a href="#" class="forgot-pass">Forgot Password</a></div> 
+                  </div>
+                  </div>
+
+                  <input type="submit" value="Log In" class="btn btn-pill text-white btn-block btn-primary">
+
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}

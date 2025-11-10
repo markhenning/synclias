@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+<!-- Basic info page -->
+    </br>
+    <h1>Status</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <table class="table" border="1">
+                <tbody>
+                    <tr>
+                        <td>Auto Sync Enabled</td>
+                        <td>{{ prefs.autosync }}</td>
+                    <tr>  
+                    <tr>
+                        <td>Last Sync</td>
+                        <td>{{ stats.last_sync }}</td>
+                    <tr>
+                        <td>Sites Routed</td>
+                        <td>{{ stats.site_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>Safety Keywords</td>
+                        <td>{{ stats.keyword_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>ASNs Routed</td>
+                        <td>{{ stats.asn_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>ASN Database Present</td>
+                        <td>{{ asndb_info.ASNDB_FILE.exists }}</td>
+                    </tr>
+                    <tr>
+                        <td>ASN Database Last Updated</td>
+                        <td>{{ asndb_info.ASNDB_FILE.modified }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

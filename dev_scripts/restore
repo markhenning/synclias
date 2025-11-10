@@ -1,0 +1,3 @@
+MARIADB_CONTAINER='mariadb'
+BACKUP_FILE='/tmp/synclias.sql.gz'
+docker exec ${MARIADB_CONTAINER} mariadb --user ${MARIADB_USER} --password=${MARIADB_PASSWORD} ${MARIADB_DATABASE} < zcat ${BACKUP_FILE} 

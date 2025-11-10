@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+</br>
+<h1>Link Scanner</h1>
+
+  The scanner can crawl most sites you supply, but some will completely reject it </br>
+  A custom User Agent string may help, you can set one in Settings </br> </br>
+
+
+  
+  <div class="row">
+    <div class="col-md-8">
+      <table class="table" border="1">
+        <form action="{{url_for('scanner.page')}}" method="post">
+        <tr>
+          {{ form.hidden_tag() }}
+          <td>
+            {{ form.target.label }}
+          </td><td>
+            {{ form.target(size=32,class="form-control") }}	
+          
+            {% for error in form.target.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+          </td>
+          <td><button type="submit"  data-bs-target="#lookup-url-modal" id="scan-button" class="btn btn-success">Scan</button></td>
+        </tr>
+        <tr>
+          <td>
+          </td>
+          <td>
+            {{ form.safe_scan.label }}
+          </td>
+          <td>
+            <div class="form-check form-switch">
+            {{ form.safe_scan(class="form-check-input") }}
+            </div>
+          </td>
+          
+        </tr>
+        </form>
+      </table>
+    </div>
+  </div>
+  </br>
+  <strong>Note:</strong> You may wish to use "Flush States", in Settings if you're setting up new sites and testing</br>
+  
+</br>This will clear established connections on the router.
+</br>  Please do not leave this enabled for day to day, and don't spam Sync with it on!
+
+  <!-- Modal for looking up a website's child URLs -->
+  <div class="modal fade" id="lookup-url-modal" tabindex="-1" aria-labelledby="lookup-url-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="container">  
+            <div class="row">
+              <div class="col-auto me-auto"><h5 class="modal-title" id="lookup-url-modal-label">Lookup URLs</h5></div>
+                <div class="col-auto">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="dismiss-button">Close</button>
+                  <button type="submit" id="add-sites-button" form="submit-all-sites" class="btn btn-success" disabled>Add Selected</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-body">
+            <div><p></p></div>
+            <!-- Placeholder to be replaced with status/results form -->
+            <div id="scan-status"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+        </div>
+      </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    
+    {{ super() }}
+    
+    {% if start_scan %}
+      <script>
+        $(document).ready(function(){
+          $("#lookup-url-modal").modal('show');
+          trigger_scan()
+        });
+      </script>
+    {% endif %}
+
+    <script>
+      // Get the modal
+      var modal = document.getElementById("lookup-url-modal");
+
+      // Get the button that opens the modal
+      var btn = document.getElementById("scan-button");
+
+      //When the modal is dismissed, reset the entry form and lock the button again
+      function clear_data(){
+        $('#scan-status').replaceWith('<div id="scan-status"></div');
+        $('#add-sites-button').prop('disabled', true);
+        document.getElementById("url-lookup").value = '';
+      }
+
+      function trigger_scan() {
+
+        div = $('<div class="spinner-border text-primary" role="status"> <span class="visually-hidden">Loading...</span></div>');
+        $('#scan-status').append(div);
+        
+        var statusdiv =  $('#scan-status')
+
+        var site_url = document.getElementById("target").value;
+        var safe_scan = document.getElementById("safe_scan").checked;
+        // Just in case anyone snuck some spaces in
+        site_url = $.trim(site_url)
+
+        var lookup_url = "{{ url_for('scanner.scan')}}";
+        var data =  JSON.stringify({ "site": site_url, "safe_scan" : safe_scan });
+
+        console.log(data);
+
+        //send ajax POST request to start background job
+        $.ajax({
+          type: 'POST',
+          url: lookup_url,
+          data: data,
+          contentType: "application/json",
+          success: function(data, statusdiv, request) {
+            status_url = request.getResponseHeader('Location');
+            console.log(status_url)
+            update_progress(status_url, statusdiv, div[0]);
+          },
+          error: function() {
+            console.log("error loop")
+            alert('Unexpected error');
+          }
+        });
+      }
+
+      function update_progress(status_url, statusdiv, status_div) {
+        // send GET request to status URL
+        $.getJSON(status_url, function(data) {
+          if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+            if ('result' in data) {
+              // Insert spinner while we work
+              div = '<div class="spinner-border text-success" role="status"> <span class="visually-hidden">Loading...</span></div>';
+              $('#scan-status').append(div)
+
+              // Build results header
+              scan_status_start = '<div id="scan-status">'
+              form_start = '<form id="submit-all-sites" action="{{url_for("sites.create_bulk_site")}}" method="post">';
+              table_start = '<table class="table" border="1"> <thead> <tr> <th>URL</th><th>Add Site?</th></tr></thead><tbody>';
+              
+              // Prep a warning message if something's gone wrong  
+              if (data['scan_rcode'] >= 400) {
+                warning = '<div class="bg-danger text-white">WARNING: Could not scan</br>Error: ' + data['scan_rcode'] + ':' + data['notes'] + '</br>You can try adding the site anyway</br>Some sites (e.g imgur) will function after addition</div>';
+                console.log("Warning Detected")
+              } else {
+                warning = ''
+              }
+
+              // Build key part of output
+              table_rows = '';
+              i=1;
+              for (const element of data['result']) {
+                // Will submit form as [('site1','www.foo.com'' ),('site2', 'www.bar.com')....] 
+                site_number = "site" + i;
+                table_rows = table_rows + '<tr><td>';
+                table_rows = table_rows + '<label for="' + site_number + '">' + element + '</label>';
+                table_rows = table_rows + '</td><td>';
+                table_rows = table_rows + '<div class="form-check form-switch">'
+                table_rows = table_rows + '<input class="form-check-input" type="checkbox" id="' + site_number + '" name="' + site_number + '" value="' + element + '" >';
+                table_rows = table_rows + '</div>';
+                table_rows = table_rows + '</td></tr>';
+
+                i = i + 1;
+              };
+                          
+              // Build footer
+              table_end = '</tbody></table>';
+              form_end = '</form></div>';
+              scan_status_end = '</div>';
+
+              modal_contents =  scan_status_start + warning + form_start + table_start + table_rows + table_end + form_end + scan_status_end;
+              
+              // Display, and enable the add site button
+              $('#scan-status').replaceWith(modal_contents);
+              $('#add-sites-button').prop('disabled', false);
+                      
+            }
+            else {
+                // something unexpected happened
+                console.log("Not sure")
+            }
+          }
+          else {
+            // Wait, then re-run, until 'results' appears in the output
+            setTimeout(function() {
+                update_progress(status_url, statusdiv, status_div);
+            }, 500);
+          }
+        });
+      }
+
+      $(function() {
+        $('#dismiss-button').click(clear_data);
+      });
+    </script>
+
+
+{% endblock %}

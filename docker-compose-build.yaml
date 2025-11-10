@@ -1,0 +1,92 @@
+services:
+  redis:
+    env_file:
+      - ".env"
+    image: "redis:latest"
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stop_grace_period: "${DOCKER_STOP_GRACE_PERIOD:-3s}"
+    volumes:
+      - "redis:/data"
+
+  web:
+    build:
+      context: "."
+      args:
+        - "FLASK_ENV=${FLASK_ENV:-production}"
+    depends_on:
+      - "redis"
+      - "db"
+    env_file:
+      - ".env"
+    ports:
+      - "${DOCKER_WEB_PORT:-127.0.0.1:8000}:8000"
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stop_grace_period: "${DOCKER_STOP_GRACE_PERIOD:-3s}"
+    links:
+      - db
+      - redis
+      - worker
+      - celery_beat
+    # volumes:
+    #   - "${DOCKER_WEB_VOLUME:-./public:/app/public}"
+
+  worker:
+    build:
+      context: "."
+      args:
+        - "FLASK_ENV=${FLASK_ENV:-production}"
+    command: /app/start-celeryworker.sh
+    depends_on:
+      - "redis"
+      - "db"
+    env_file:
+      - ".env"
+    links:
+      - redis
+      - db
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stop_grace_period: "${DOCKER_STOP_GRACE_PERIOD:-3s}"
+    # volumes:
+    #   - "${DOCKER_WEB_VOLUME:-./public:/app/public}"
+
+
+  celery_beat:
+    build:
+      context: "."
+      args:
+        - "FLASK_ENV=${FLASK_ENV:-production}"
+    command: /app/start-celerybeat.sh
+    depends_on:
+      - "redis"
+      - "db"
+    env_file:
+      - ".env"
+    links:
+      - db
+      - redis
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stop_grace_period: "${DOCKER_STOP_GRACE_PERIOD:-3s}"
+    # volumes:
+    #   - "${DOCKER_WEB_VOLUME:-./public:/app/public}"
+
+  db:
+    image: mariadb:lts-ubi9
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_RANDOM_ROOT_PASSWORD=1
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+    expose:
+      - 3306
+
+volumes:
+  redis: {}
+  db_data:
+
+networks:
+  redis_net:
+  db_net:

@@ -1,0 +1,192 @@
+{% extends "stub.html" %}
+
+{% block log_content %}
+
+<hr>
+<h2>Info</h2>
+
+{% if result_data.stats is defined %}
+<table class="table" border="1">
+    <tr>
+        <td>Sync Result</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Start Time</td>
+        <td>{{ result_data.stats.start_time if result_data.stats.start_time is defined }}</td>
+    </tr>
+    <tr>
+        <td>End Time</td>
+        <td>{{ result_data.stats.end_time if result_data.stats.end_time is defined }}</td>
+    </tr>
+    <tr>
+        <td>Preflight Passed</td>
+        <td>{{ result_data.preflight.proceed if result_data.preflight.proceed is defined }}</td>
+    </tr>
+        <tr>
+        <td>Preflight Message</td>
+        <td>{{ result_data.preflight.message if result_data.preflight.message is defined }}</td>
+    </tr>
+    <tr>
+        <td>Alias Changes</td>
+        <td>{{ result_data.stats.alias_changes if result_data.stats.alias_changes is defined }}</td>
+    </tr>
+    </tr>
+        <td>Firewall reconfigured?</td>
+        <td>{{ result_data.stats.need_reconfigured if result_data.stats.need_reconfigured is defined }}</td>      
+    </tr>
+    <tr>
+        <td>States Flushed</td>
+        <td>{{ result_data.stats.status_flushed if result_data.stats.status_flushed is defined }}</td>
+    </tr>
+</table>
+{% else %}
+No stats in log
+{% endif %}
+
+
+<hr>
+<h2>Site Discovery </h2>
+{% if result_data.discovery_map is defined %}
+    {% if result_data['discovery_map'] == {} %}
+        No discovery scans completed
+    {% else %}
+    <table class="table" border="1">
+        <thead>
+            <td>Site</td>
+            <td>Discovered/Base URL</td>
+        </thead>
+        <tbody>
+            {% for entry in result_data['discovery_map'] %}
+            <tr>            
+                <td>{{entry}} </td>
+                <td>{{ result_data['discovery_map'][entry]}}</td>
+
+            <tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+{% else %}
+    No discovery data in log
+{% endif %}
+
+<hr>
+<h2>Scan Failures </h2>
+
+{% if result_data.scan_failures is defined %}
+    {% if result_data['scan_failures'] == {} %}
+        No Scanning failures
+    {% else %}
+        If these are persistent, consider turning off scanning on sync for these domains
+        <table class="table" border="1">
+            <thead>
+                <td>Site</td>
+                <td>Error</td>
+            </thead>
+            <tbody>
+                {% for entry in result_data['scan_failures'] %}
+                <tr>            
+                    <td>{{entry}} </td>
+                    <td>{{ result_data['scan_failures'][entry]}}</td>
+
+                <tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% else %}
+No Scanning failure data in log
+{% endif %}
+
+
+<hr>
+<h2>Sites Removed by Keyword </h2>
+
+{% if result_data.keyword_removals is defined %}
+    {% if result_data['scan_failures'] == {} %}
+        No keyword removals
+    {% else %}
+        <table class="table" border="1">
+            <thead>
+                <td>Site</td>
+                <td>Keyword causing removal</td>
+            </thead>
+            <tbody>
+                {% for entry in result_data['keyword_removals'] %}
+                <tr>            
+                    <td>{{entry}} </td>
+                    <td>{{ result_data['keyword_removals'][entry]}}</td>
+
+                <tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% else %}
+    No keyword usage in log
+{% endif %}
+
+<hr> 
+<h2>DNS Lookup failures </h2>
+
+{% if result_data.forced_entries is defined %}
+    {% if result_data.unresolved_urls == [] %} None {% else %} {{ result_data.unresolved_urls}} {% endif %}
+{% else %}
+    No DNS lookup data in log
+{% endif %}
+
+<hr> 
+<h2>Forced Domain Usage </h2>
+{% if result_data.forced_entries is defined %}
+    {% if result_data.forced_entries == [] %} None {% else %} {{ result_data.forced_entries }} {% endif %}
+{% else %}
+    No forced domain usage in log
+{% endif %}
+
+
+<br>
+
+<hr> 
+<h2>IP Changes</h2>
+
+<h4>IPv4</h4>
+Note: There will always be small movements/chatter, don't try to get these down to 0, sites should generally be fine.
+<br>
+If a site is hopping around the same IPs, consider enabling historical DNS
+<br>
+
+{% if result_data.ipv4 is defined %}
+<table class="table" border="1">
+    <tr>
+        <td>Marked for Addition:</td>
+        <td>{% if result_data.ipv4.to_add == [] %} None {% else %} {{result_data.ipv4.to_add }} {% endif %}</td>
+    </tr>
+    <tr>
+        <td>Marked for Removal</td>
+        <td>{% if result_data.ipv4.to_remove == [] %} None {% else %} {{result_data.ipv4.to_remove }} {% endif %}</td>
+    </tr>
+</table>
+{% else %}
+    No IPv4 record data in log file
+{% endif%}
+
+<br>
+
+<h4>IPv6</h4>
+{% if result_data.ipv6 is defined %}
+<table class="table" border="1">
+    <tr>
+        <td>Marked for Addition:</td>
+        <td>{% if result_data.ipv6.to_add == [] %} None {% else %} {{result_data.ipv6.to_add }} {% endif %}</td>
+    </tr>
+    <tr>
+        <td>Marked for Removal</td>
+        <td>{% if result_data.ipv6.to_remove == [] %} None {% else %} {{result_data.ipv6.to_remove }} {% endif %}</td>
+    </tr>
+</table>
+{% else %}
+    No IPv6 record data in log file
+{% endif%}
+
+{% endblock %}

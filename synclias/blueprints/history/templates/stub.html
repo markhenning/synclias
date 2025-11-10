@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+<!-- {{result_data}} -->
+
+
+    </br>
+    <h1>Sync History</h1>
+    <div>
+        <select class="form-select-sm" id="log_list" onchange="change_log()">
+            {% for log in log_list %}
+            <option {{'selected' if log.id == log_id }} value="{{ log.id}}">{{log.timestamp}} (Changes: {{log.changes}})</option> 
+            {% endfor %}
+        </select>
+        <br><br>
+        
+        <div class="form-check form-switch">
+            Hide logs with no changes?
+            {% if hide_zero == 1 %}
+            <input class="form-check-input" type="checkbox" name="hide_zero" id="hide_zero" checked="checked" onclick="change_log()">
+            {% else %}
+            <input class="form-check-input" type="checkbox" name="hide_zero" id="hide_zero" onclick="change_log()">
+            {% endif %}
+        </div>
+
+
+    </div>
+    <hr>
+
+<p>To view live logs from the worker, use the command: docker logs -f 'worker-container-name'</p>
+<p>You can get 'worker-container-name' from a "docker ps"</p>
+
+{% if no_log == True %}
+No logs to display
+{% else %}
+{% block log_content %}{% endblock %}
+{% endif%}
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ super() }}
+
+    <script>
+        function change_log(){
+            var value = $('#log_list :selected').val();
+            console.log(value);
+
+            var hide_zero = $('#hide_zero').is(':checked');
+            hide_zero === true ? hide_zero_int = 1 : hide_zero_int = 0
+
+            window.location.href = ("/history/?log_id=" + value + "&hide_zero=" + hide_zero_int);
+
+        }
+    </script>
+
+
+
+{% endblock %}

@@ -1,0 +1,791 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+  <!-- Modal for NameServer-->
+  <div class="modal fade" id="add-ns-modal" tabindex="-1" aria-labelledby="add-ns-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="add-ns-modal-label">Add Nameserver</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{{url_for('core.nameserver_create')}}" method="post">
+            <div class="form-group row">
+              <label for="hostname" class="col-xs-2 control-label">Hostname</label>
+              <div class="col-xs-10">
+                <input type="text" id="hostname" class="form-control" name="hostname" placeholder="ns1.site.lan" />
+              </div>
+            </div>
+            <!-- Dropdown for NS type selection -->
+            <div class="form-group row">
+              <label for="hostname" class="col-xs-2 control-label">Type</label>
+              <div class="col-xs-10">
+                <select name="type" class="form-select-sm" id="type" onchange="ns_modal_toggle_fields(this.id)">
+                  <option disabled selected value> -- select an option -- </option>
+                  <option value="technitium">Technitium</option>
+                  <option value="standard_ns">Standard DNS</option>
+                </select>
+              </div>
+            </div>
+            <!-- Hide extra options until we know if it's a standard_ns or not -->
+            <div hidden id="ns-control-options" >
+              <div class="form-group row">
+                <label for="port" class="col-xs-2 control-label">Management Port</label>
+                <div class="col-xs-10">
+                  <input type="text" id="port" class="form-control" name="port" placeholder="" />
+                </div>
+              </div>
+              <div class="form-group row">
+                <label for="token" class="col-xs-2 control-label">Token</label>
+                <div class="col-xs-10">
+                  <input type="password" id="token" class="form-control" name="token" placeholder="" />
+                </div>
+              </div>
+              <div class="form-group row">
+                <div class="form-check form-switch">
+                  <label for="https" class="col-md-6 control-label">HTTPS?</label>
+                  <input class="form-check-input" type="checkbox" name= "https" id="https">
+                  <label for="verifytls" class="col-md-6 control-label">Verify TLS?</label>
+                  <input class="form-check-input" type="checkbox" name= "verifytls" id="verifytls">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" id="add-ns-modal-button" class="btn btn-success" disabled>Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal End: Add Nameserver-->
+  </br>  
+ 
+  <!-- Main Page section start -->
+  <div class="row">
+    <div class="col-md-6">
+       <h1>Router</h1>
+      <table class="table table-striped" border="1">
+        <tbody>
+          <form action="{{url_for('core.settings')}}" method="post">
+          {{ router_form.hidden_tag() }}     
+            <tr>
+              <td>{{ router_form.hostname.label }}</td>
+              <td>
+                {{ router_form.hostname(size=32,class="form-control",value=router.hostname) }}
+                {% for error in router_form.hostname.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td>{{ router_form.apikey.label }}</td>
+              <td>
+                {{ router_form.apikey(size=32,class="form-control",value=router.apikey) }}
+                {% for error in router_form.apikey.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td>{{ router_form.apisecret.label }}</td>
+              <td>
+                {{ router_form.apisecret(size=32,class="form-control",value=router.apisecret) }}
+                {% for error in router_form.apisecret.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td>{{ router_form.alias.label }}</td>
+              <td>
+                {{ router_form.alias(size=32,class="form-control",value=router.alias) }}
+                {% for error in router_form.alias.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td>IPv6</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="ipv6" id="ipv6" onclick="toggle_alias_ipv6(this.id,this.checked)" {{ 'checked="checked"' if router.ipv6 is true }} >
+                </div>
+              </td>
+            </tr>
+              <tr>
+              <td>{{ router_form.alias_ipv6.label }}</td>
+              <td>
+                {{ router_form.alias_ipv6(size=32,class="form-control",value=router.alias_ipv6) }}
+                {% for error in router_form.alias_ipv6.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <!-- <tr>
+              <td>Firewall Alias Name</td>
+              <td><input name="alias" id="alias" value="{{ router.alias}}"></td>
+            </tr> -->
+            <tr>
+              <td>Use HTTPS?</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name= "https" id="https" {{ 'checked="checked"' if router.https is true }}>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Verify TLS?</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name= "verifytls" id="verifytls" {{ 'checked="checked"' if router.verifytls is true }}>
+                </div>
+              </td> 
+            </tr>
+            <tr>  
+              <td></td>
+              <td><button type="submit" class="btn btn-success" value="Save">Save Changes</button> ->
+                <button type="button" id="test-router-button" onclick="test_router()" class="btn btn-primary" value="Connectivity" data-bs-toggle="modal" data-bs-target="#test-result-modal">Test</button>
+              </td>
+            </tr>
+          </form>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+       <h1>App Settings</h1>
+        <table class="table table-striped" border="1">
+        <tbody>
+          <tr>
+            <td>Auto-Sync</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name= "autosync" id="autosync" onclick="toggle_pref_bool(this.id,this.checked)" {{ 'checked="checked"' if prefs.autosync is true }}>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Sync every:</td>
+              <td>
+                <select class="form-select-sm" id="sync_every" onchange="toggle_pref_int(this.id)">
+                  <option {{'selected' if prefs.sync_every==1}} value="1">1</option>
+                  <option {{'selected' if prefs.sync_every==3}} value="3">3</option>
+                  <option {{'selected' if prefs.sync_every==6}} value="6">6</option>
+                  <option {{'selected' if prefs.sync_every==12}} value="12">12</option>
+                  <option {{'selected' if prefs.sync_every==24}} value="24">24</option>
+                </select>
+                <label class="form-select-sm" for="sync_every">Hour(s)</label>
+              </td> 
+            </tr>
+            <!-- Disabled for beta version, leaving code in place -->
+            <!-- <tr>
+              <td>Auto ASN DB Download</td>
+              <td>
+                <div class="form-check form-switch">
+                  {% if prefs.autoasndb is true %}
+                  <input class="form-check-input" type="checkbox" name= "autoasndb" id="autoasndb" checked="checked" onclick="toggle_pref_bool(this.id,this.checked)">
+                  {% else %}
+                  <input  class="form-check-input" type="checkbox" name= "autoasndb" id="autoasndb" onclick="toggle_pref_bool(this.id,this.checked)">
+                  {% endif %}
+                </div>            
+              </td>
+            </tr> 
+
+            <tr>
+              <td>Download every:</td>
+              <td>
+                <select class="form-select-sm" id="asndb_every" onchange="toggle_pref_int(this.id)">
+                  <option {{'selected' if prefs.asndb_every==7}} value="7">7</option>
+                  <option {{'selected' if prefs.asndb_every==14}} value="7">14</option>
+                  <option {{'selected' if prefs.asndb_every==30}} value="30">30</option>
+                </select>
+                <label class="form-select-sm" for="asndb_every">Day(s)</label>
+              </td>
+            </tr> -->
+            <tr>
+              <td>Purge DNS on Sync <br> (Requires Technitium)</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="purgedns" id="purgedns" onclick="toggle_pref_bool(this.id,this.checked)" {{ 'checked="checked"' if prefs.purgedns is true }}>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Flush States on Sync <br> (Useful for Testing Sites)</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="flush_states" id="flush_states" onclick="toggle_pref_bool(this.id,this.checked)" {{ 'checked="checked"' if prefs.flush_states is true }}>
+                </div>
+              </td>
+            </tr>
+            <tr>
+            <td>Collect DNS History for All Sites?</td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name= "global_dns_history" id="global_dns_history" onclick="toggle_pref_bool(this.id,this.checked)" {{ 'checked="checked"' if prefs.global_dns_history is true }}>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Keep DNS History for:</td>
+              <td>
+                <select class="form-select-sm" id="keep_dns_days" onchange="toggle_pref_int(this.id)">
+                  <option {{'selected' if prefs.keep_dns_days==7}} value="7">7</option>
+                  <option {{'selected' if prefs.keep_dns_days==30}} value="30">30</option>
+                  <option {{'selected' if prefs.keep_dns_days==60}} value="60">60</option>
+                </select>
+                <label class="form-select-sm" for="keep_dns_days">Day(s)</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Scanner User Agent
+              </td>
+              <td>
+                <button type="button" id="edit-user-agent-button" class="btn btn-outline-primary" value="Connectivity" data-bs-toggle="modal" data-bs-target="#edit-user-agent-modal">Edit...</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <button hidden type="button" id="asn-download-button" class="btn btn-outline-danger" value="Connectivity" onclick="force_asn_download()" data-bs-toggle="modal" data-bs-target="#asn-download-modal">Not Required - Force ASN DB Download...</button>
+              <td>
+                <button input class="btn btn-outline-danger"  onclick="document.location='{{url_for("auth.change_password")}}'">Change Admin Password...</button>  
+              </td>
+            </tr> 
+          </tbody> 
+        </table>
+      </div>
+  </div>
+</br>
+</br>
+  <h1>NameServers</h1>
+  
+  <div class="row">
+    <div class="col-form-label">
+      <table class="table" border="1">
+        <thead>
+            <tr>
+                <th>Hostname</th>
+                <th>Type</th>
+                <th>Mgmt Port</th>
+                <th>Token</th>
+                <th>HTTPS</th>
+                <th>Verify TLS</th>
+                <th>Action</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+      
+          {% for nameserver in nameservers %}
+          
+          <tr>
+            <form action="{{url_for('core.nameserver_update', id=nameserver['id'])}}" method="post">
+
+              <td><input class="form-control" name="hostname" id="hostname" value="{{ nameserver.hostname}}"></td>
+                <td>
+                  <!-- class="custom-select my-1 mr-sm-2" -->
+                  <select name="type" class="form-select"  id="nstype_{{nameserver['id']}}" onchange="update_dns_type(this.id, this.selectedIndex)">
+                    <option {{'selected' if nameserver["type"] == 'technitium'}} value="technitium">Technitium</option>
+                    <option {{'selected' if nameserver["type"] == 'standard_ns'}} value="standard_ns">Standard DNS</option>
+                  </select>
+                </td> 
+                  <td>
+                    <input class="form-control" {{'hidden' if nameserver["type"] == 'standard_ns'}}  name="port" id="port_{{nameserver['id']}}" value="{{ nameserver.port}}">
+                    <label class="form-control" {{'hidden' if nameserver["type"] != 'standard_ns'}}  id="label_port_{{nameserver['id']}}">N/A</label><br>
+                  </td>
+                  <td>
+                    <input class="form-control" {{'hidden' if nameserver["type"] == 'standard_ns'}} type="password" name="token" id="token_{{nameserver['id']}}" value="{{ nameserver.token }}">
+                    <label class="form-control" {{'hidden' if nameserver["type"] != 'standard_ns'}}  id="label_token_{{nameserver['id']}}">N/A</label><br>
+                  </td>
+                  <td>
+                    <div {{'hidden' if nameserver["type"] == 'standard_ns'}} id="https_{{nameserver['id']}}" >
+                      <div class="form-check form-switch" > 
+                        {% if nameserver.https is true %}
+                        <input class="form-check-input" type="checkbox" name= "https" id="https" checked="checked">
+                        {% else %}
+                        <input class="form-check-input" type="checkbox" name= "https" id="https"/>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <label {{'hidden' if nameserver["type"] != 'standard_ns'}} id="label_https_{{nameserver['id']}}">N/A</label>
+                  </td>
+                  <td>
+                    <div id="verify_tls_{{nameserver['id']}}"  {{'hidden' if nameserver["type"] == 'standard_ns'}}>
+                      <div class="form-check form-switch">
+                        {% if nameserver.verifytls is true %}
+                        <input class="form-check-input" type="checkbox" name= "verifytls" id="verifytls" checked="checked">
+                        {% else %}
+                        <input class="form-check-input" type="checkbox" name= "verifytls" id="verifytls">
+                        {% endif %}
+                      </div>
+                    </div>
+                    <label {{'hidden' if nameserver["type"] != 'standard_ns'}}  id="label_verify_tls_{{nameserver['id']}}">N/A</label>
+                  </td>
+                
+          
+                <td><button type="submit" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#update-ns-modal_{{nameserver['id']}}">Save</button></td>
+                <td><button type="button" id="test-ns-button_{{nameserver['id']}}" onclick="test_nameserver(this.id)" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#test-result-modal">Test</button></td>
+
+                <td><button type="button" class="btn btn-danger"data-bs-toggle="modal" data-bs-target="#delete-ns-modal_{{nameserver['id']}}">Delete</button></td>
+              </form>
+            </tr>
+            <!-- Modal for deleting a nameserver -->
+            <div class="modal fade" id="delete-ns-modal_{{ nameserver['id']}}" tabindex="-1" aria-labelledby="delete-ns-modal-label" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="delete-ns-modal-label">Delete Site</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+
+                  <form action="{{url_for('core.nameserver_delete', id=nameserver['id'])}}" method="post">
+                    <div class="modal-body">
+                      <div class="form-group row">
+                        <label class="col-sm-12 col-form-label">Do you want to delete the nameserver: <spa style='font-weight:bold;color:red'>{{nameserver.hostname}}</span>?</label>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            <!-- End Modal-->
+
+            <!-- Modal for Testing Results -->
+            <div class="modal fade" id="test-result-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="test-result-modal-label" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <div class="col-auto me-auto"><h5 class="modal-title" id="test-result-modal">Test Results</h5></div>
+                    <div class="col-auto">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="dismiss-button">Close</button>
+                    </div>
+                  </div>
+                  <div class="modal-body">
+                    <!-- Placeholder to be replaced with status/results form -->
+                    <div id="test-status"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- End Modal-->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Placeholder modal for ASNDB Download, will make this all more generic later -->
+    <div class="modal fade" id="asn-download-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="asn-download-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="col-auto me-auto"><h5 class="modal-title" id="asn-download">ASN DB Download</h5></div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="dismiss-button">Close</button>
+            </div>
+          </div>
+          <div class="modal-body">
+              <!-- Placeholder to be replaced with status/results form -->
+              <div id="asn-download-status"></div>
+          </div>
+          </div>
+      </div>
+    </div>
+    <!-- End ASNDB Modal-->
+
+    <!-- Placeholder modal for User Agent Modifications, will make this all more generic later -->
+    <div class="modal fade" id="edit-user-agent-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="edit-user-agent-modal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="col-auto me-auto"><h5 class="modal-title" id="edit-user-agent">Edit Scanner User Agent</h5></div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="dismiss-button">Close</button>
+                <button type="submit" class="btn btn-success" form="user-agent-form" id="update-user-agent-button">Update</button>
+              </div>
+            </div>
+            <div class="modal-body">
+              <div class="form-group row">
+                <p>Some sites will reject scanning based on User Agent, if you'd like to specify a custom one, enter it here</p>
+              </div>
+              <div class="form-group row">
+                <form name="user-agent-form" id="user-agent-form" action="{{ url_for('core.update_scanner_agent')}}" method="post">
+                  <input type="text" id="user_agent" class="form-control" name="user_agent" value="{{ prefs.user_agent }}" placeholder="" />
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Modal-->
+  <p>Add internal DNS Servers below (e.g. router etc)<br>
+  Don't add external DNS servers</p>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-ns-modal">
+        Add Nameserver
+      </button>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+      // Disable the entry field for IPv6 alias if IPv6 isn't enabled
+      $(document).ready(function(){
+        if ( ! document.getElementById("ipv6").checked){
+          $('#alias_ipv6').prop('disabled',true);
+        }
+      });
+
+      // Parter of previous function to track textarea state to checkbox state
+      function toggle_alias_ipv6(id,state){
+        state === true ? $('#alias_ipv6').prop('disabled',false) : $('#alias_ipv6').prop('disabled',true);
+      }
+
+      // Preference Toggle changes, if int value
+      function toggle_pref_int(id){
+
+        var e = document.getElementById(id);
+        var val = e.options[e.selectedIndex].text;
+
+        url = "/prefs/" + id + "/" + val;
+        $.ajax({
+          type: 'PUT',
+          url: url, 
+        });
+      }
+
+      // Preference Toggle changes, if int value, if bool
+      function toggle_pref_bool(id,state){
+
+        state === true ? state_int = 1 : state_int = 0
+
+        url = "/prefs/" + id + "/" + state_int;
+        $.ajax({
+          type: 'PUT',
+          url: url, 
+        });
+      }
+    </script>
+    
+    <script>
+    // ASN Stuff
+    function force_asn_download(){
+      div = $('<div class="spinner-border text-primary" role="status"> <span class="visually-hidden">Loading...</span></div>');
+      $('#asn-download-status').append(div);
+
+      var asn_download_url = '{{url_for("asns.download_asndb")}}';
+
+      $.ajax({
+        type: 'POST',
+        url: asn_download_url,
+        // data: data,
+        contentType: "application/json",
+        success: function(data, statusdiv, request) {
+            status_url = request.getResponseHeader('Location');
+            update_asn_download_progress(status_url, statusdiv, request);
+        },
+        error: function() {
+            console.log("error loop")
+            alert('Unexpected error');
+        }
+      });
+    }
+      
+    function update_asn_download_progress(status_url, statusdiv, request) {
+      // send GET request to status URL
+      $.getJSON(status_url, function(data) {
+
+        update_asn_download_modal(data);
+
+        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+
+        } else {
+          setTimeout(function() {
+            update_asn_download_progress(status_url, statusdiv, request);
+          }, 500);
+        }
+      })
+    }
+
+    // TODO - Replace all with a for... if not <message> etc
+    function update_asn_download_modal(data){
+      table_rows = '<div id="asn-download-status"><table class="table" border="1">';
+      table_rows = table_rows + '<tr><td>Current Step<td>';
+      table_rows = table_rows + '<td>'+ data['current_step'] +'</td></tr>';
+      table_rows = table_rows + '<tr><td>Message<td>';
+      table_rows = table_rows + '<td>'+ data['message'] +'</td></tr>';
+      table_rows = table_rows + '<tr>';
+      table_rows = table_rows + '</table></div>';
+
+      $('#asn-download-status').replaceWith(table_rows);
+    }
+  </script>
+
+  <!-- Nameserver scripts -->
+  <script>
+
+    // For Modal, present relevant option depending on standard ns or not
+    function ns_modal_toggle_fields(id){
+      control_options = document.getElementById("ns-control-options");
+      var e = document.getElementById(id);
+      var text = e.options[e.selectedIndex].text;
+      if (text === "Standard DNS"){
+        $(control_options).prop('hidden',true);
+      }else {
+        $(control_options).prop('hidden',false);
+      }
+      $('#add-ns-modal-button').prop('disabled',false);
+    }
+
+    function update_dns_type(id){
+      
+      /// Yeah.... I know
+
+      //Work out which NS
+      const splitArray = id.split("_");
+      port_field = document.getElementById("port_" + splitArray[1]);
+      token_field = document.getElementById("token_" + splitArray[1]);
+      https_field = document.getElementById("https_" + splitArray[1]);
+      verify_tls_field = document.getElementById("verify_tls_" + splitArray[1]);
+      label_port_field =  document.getElementById("label_port_" + splitArray[1]);
+      label_token_field = document.getElementById("label_token_" + splitArray[1]);
+      label_https_field =  document.getElementById("label_https_" + splitArray[1]);
+      label_verify_tls_field = document.getElementById("label_verify_tls_" + splitArray[1]);
+
+      // TODO - There's a better way to do this with direct values
+      var e = document.getElementById(id);
+      var text = e.options[e.selectedIndex].text;
+      if (text == "Standard DNS"){
+
+        $(port_field).prop('hidden',true);
+        $(token_field).prop('hidden',true);
+        $(https_field).prop('hidden',true);
+        $(verify_tls_field).prop('hidden',true);
+        $(label_port_field).prop('hidden',false);
+        $(label_token_field).prop('hidden',false);
+        $(label_https_field).prop('hidden',false);
+        $(label_verify_tls_field).prop('hidden',false);
+
+      } else {
+
+        $(port_field).prop('hidden',false);
+        $(token_field).prop('hidden',false);
+        $(https_field).prop('hidden',false);
+        $(verify_tls_field).prop('hidden',false);
+        $(label_port_field).prop('hidden',true);
+        $(label_token_field).prop('hidden',true);
+        $(label_https_field).prop('hidden',true);
+        $(label_verify_tls_field).prop('hidden',true);
+      }
+    }
+
+
+  </script>
+  <script>
+    function test_nameserver(id){
+      
+      // Get the database entry ID of the nameserver to test
+      const splitArray = id.split("_");
+
+      div = $('<div class="spinner-border text-primary" role="status"> <span class="visually-hidden">Loading...</span></div>');
+      $('#test-status').append(div);
+
+      // Get type of Nameserver, generate url to trigger based on type
+      ns_type_id = 'nstype_' + splitArray[1]
+      ns_type= document.getElementById(ns_type_id).value;
+      var lookup_url = '/' + ns_type + '/test/' + splitArray[1];
+
+      $.ajax({
+        type: 'POST',
+        url: lookup_url,
+        // data: data,
+        contentType: "application/json",
+        success: function(data, statusdiv, request) {
+          status_url = request.getResponseHeader('Location');
+          update_nameserver_test_progress(status_url, statusdiv, div[0]);
+        },
+        error: function() {
+          alert('Unexpected error');
+        }
+      });
+    }
+
+    function test_router(){
+      
+      //Spiner whilst we wait to be queued
+      div = $('<div class="spinner-border text-primary" role="status"> <span class="visually-hidden">Loading...</span></div>');
+      $('#test-status').append(div);
+      var test_router_url = '/opnsense/test';
+
+      $.ajax({
+        type: 'POST',
+        url: test_router_url,
+        // data: data,
+        contentType: "application/json",
+        success: function(data, statusdiv, request) {
+            status_url = request.getResponseHeader('Location');
+            update_router_test_progress(status_url, statusdiv, div[0]);
+        },
+        error: function() {
+            console.log("error loop")
+            alert('Unexpected error');
+        }
+      });
+    }
+      
+    // TODO - Replace all with a for... if not <message> etc
+    function update_test_modal(data){
+      table_rows = '<div id="test-status"><table class="table table-striped" border="1">';
+      table_rows = table_rows + '<tr><td>Database Entry Exists<td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['dbquery']) +'</td></tr>';
+      table_rows = table_rows + '<tr><td>IP Connectivity<td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['ip_connectivity']) +'</td></tr>';
+      table_rows = table_rows + '<tr><td>API Login<td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['login']) +'</td></tr>';
+      table_rows = table_rows + '<tr><td>Add/Remove IP<td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['alias_add_remove']) +'</td></tr>';
+      table_rows = table_rows + '<tr><td>Test Reconfigure <td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['reconfigure']) +'</td></tr>';
+      table_rows = table_rows + '<tr><td>Output Message<td>';
+      table_rows = table_rows + '<td>'+ get_icon(data['message']) +'</td></tr>';
+      table_rows = table_rows + '</table></div>';
+      
+      $('#test-status').replaceWith(table_rows);
+    }
+
+    function update_router_test_progress(status_url, statusdiv, status_div) {
+      // send GET request to status URL
+      $.getJSON(status_url, function(data) {
+        update_test_modal(data);
+
+        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+
+        } else {
+          setTimeout(function() {
+              update_router_test_progress(status_url, statusdiv, status_div);
+          }, 500);
+        }
+      })
+    }
+    
+    // Clear the test modal and set it back to the base div
+    function clear_data(){
+      $('#test-status').replaceWith('<div id="test-status"></div');
+    }
+    
+    // Maps "Pending, Pass, Fall" to icons for modal displays
+    function get_icon(testresult){
+      switch(testresult) {
+        case "Pass":
+          return '<i class="bi bi-check-circle-fill" style=" color: green;"></i>'
+        case "Fail":
+          return '<i class="bi bi-x-circle-fill" style=" color: red;"></i>'
+        case "Pending":
+          return '<i class="bi bi-dash-circle-dotted" style=" color: yellow;"></i>'
+        case "Skipped":
+          return '<i class="bi bi-skip-forward-fill" style=" color: blue;"></i>'
+        case "Not run":
+          return '<div class="spinner-border spinner-border-sm text-primary" role="status"> </div>'
+        default:
+          // Didn't translate to an icon, return the text
+          return testresult
+      } 
+    }
+
+    function update_nameserver_test_progress(status_url, statusdiv, status_div) {
+      // send GET request to status URL
+      $.getJSON(status_url, function(data) {
+
+        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+
+          // TODO - Replace all with a for... if not <message> etc
+          table_rows = '<div id="test-status"><table class="table table-striped" border="1">';
+          table_rows = table_rows + '<tr><td>Database Entry<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['dbquery']) +'</td></tr>';
+          table_rows = table_rows + '<tr><td>IP Connectivity<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['ip_connectivity']) +'</td></tr>';
+          table_rows = table_rows + '<tr><td>DNS Query<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['query']) +'</td></tr>';
+          table_rows = table_rows + '<tr><td>API Login<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['login']) +'</td></tr>';
+          table_rows = table_rows + '<tr><td>Cache Clear<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['cache_clear']) +'</td></tr>';
+          table_rows = table_rows + '<tr><td>Output Message<td>';
+          table_rows = table_rows + '<td>'+ get_icon(data['message']) +'</td></tr>';
+          table_rows = table_rows + '</table></div>';
+          
+          $('#test-status').replaceWith(table_rows);
+
+          if ('result' in data) {
+
+            // Put a spinner in during work
+            div = '<div class="spinner-border text-success" role="status"> <span class="visually-hidden">Loading...</span></div>';
+            $('#scan-status').append(div)
+
+            // Prep "headers" for output
+            scan_status_start = '<div id="scan-status">'
+            table_start = '<table class="table table-striped" border="1"> <thead> <tr> <th>URL</th><th>Add Site?</th></tr></thead><tbody>';
+            
+            // Prep appropriate warning message if needed
+            if (data['scan_rcode'] >= 400) {
+              warning = '<div class="bg-danger text-white">WARNING: Could not scan</br>Error: ' + data['scan_rcode'] + ':' + data['notes'] + '</br>You can try adding the site anyway</br>Some sites (e.g imgur) will function after addition</div>';
+            } else {
+              warning = ''
+            }
+
+            // Build results table, it's large and messy, but easier to read than one long string
+            table_rows = '';
+            i=1;
+            for (const element of data['result']) {
+              n_element = element;
+              n_site = "site" + i;
+              table_rows = table_rows + '<tr><td>';
+              table_rows = table_rows + '<label for="' + n_site + '">' + element + '</label>';
+              table_rows = table_rows + '</td><td>';
+              table_rows = table_rows + '<div class="form-check form-switch">'
+              table_rows = table_rows + '<input class="form-check-input" type="checkbox" id="' + n_site + '" name="' + n_site + '" value="' + element + '" checked="checked">';
+              table_rows = table_rows + '</div>';
+              table_rows = table_rows + '</td></tr>';
+
+              i = i + 1;
+            };
+                
+            // build "footer" for output
+            table_end = '</tbody></table>';
+
+            scan_status_end = '</div>';
+
+            // Put it all together
+            modal_contents =  scan_status_start + warning + table_start + table_rows + table_end + scan_status_end;
+            $('#test-status').replaceWith(modal_contents);
+          }
+          else {
+            // something unexpected happened
+            console.log("Not sure")
+          }
+        }
+        else {
+          // rerun every half second
+          setTimeout(function() {
+              update_nameserver_test_progress(status_url, statusdiv, status_div);
+          }, 500);
+        }
+      });
+    }
+        
+    $(function() {
+        $('#dismiss-button').click(clear_data);
+    });
+  </script>
+
+{% endblock %}

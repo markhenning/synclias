@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Synclias{% endblock %}
+
+{% block page_content %}
+
+<!-- Unused docs page, not referenced, left for now -->
+
+<h1>Technitium Configuration Guide</h1>
+<h2>Overview</h2>
+<p>Synclias needs very minimal access to Technitium, with permissions only to eject a site from the cache.</p>
+<p>This guide will:</p>
+<ul>
+<li>Create a User named "cache_clear"</li>
+<li>Create a Group called "cache_clear_group"</li>
+<li>Add the user to the group</li>
+<li>Grant necessary permissions to the group&nbsp;</li>
+<li>Create a user token for Synclias to use</li>
+</ul>
+<p>All steps below assume access to the management web interface</p>
+<h2>User Setup</h2>
+<p>1. Navigate to: <strong>Administration</strong> -&gt; <strong>Users</strong></p>
+<p>2. Click <strong>Add User</strong> and create:</p>
+<ul>
+<li>Display Name: <strong>cache_clear</strong></li>
+<li>Username: <strong>cache_clear</strong></li>
+<li>Password: &lt;Supply a very long password, this will never be needed&gt;</li>
+</ul>
+<p>3. Click <strong>Add</strong></p>
+<h2>Group Setup</h2>
+<p>1. Navigate to:&nbsp;<strong>Administration</strong> -&gt; <strong>Groups</strong></p>
+<p>2. Click <strong>Add Group</strong> and create:</p>
+<ul>
+<li>Name: <strong>cache_clear_group</strong></li>
+<li>Description: "Group for Synclias cache management users</li>
+</ul>
+<p>3. Click <strong>Add</strong></p>
+<h2>Add User to Group</h2>
+<p>1. Navigate to: <strong>Administration</strong> -&gt; <strong>Groups</strong></p>
+<p>2. Click the "<strong>cache_clear_group</strong>"</p>
+<p>3. Use the <strong>Add User</strong> dropdown to add <strong>cache_clear</strong> to the group</p>
+<p>4. Click <strong>Save</strong></p>
+<h2>Grant Required Permissions</h2>
+<p>1. Navigate to: <strong>Administration</strong> -&gt; <strong>Permissions</strong></p>
+<p>2. In the <strong>Section</strong> column, click <strong>Cache</strong></p>
+<p>3. From the <strong>Add Group</strong> dropdown, select the <strong>cache_clear_group</strong> to add it to the <strong>Group Permissions</strong> section</p>
+<p>4. Ensure permissions for the <strong>cache_clear_group</strong> are set as follows:</p>
+<ul>
+<li>View: <strong>Empty</strong></li>
+<li>Modify: <strong>Empty</strong></li>
+<li>Delete: <strong>Checked</strong></li>
+</ul>
+<p>5. Click <strong>Save</strong></p>
+<h2>Create a Token for the Account</h2>
+<p>1. Navigate to:&nbsp;<strong>Administration</strong> -&gt; <strong>Sessions</strong></p>
+<p>2. Click <strong>Create Token&nbsp;</strong>and create:</p>
+<ul>
+<li>Username: select <strong>cache_clear</strong> from the dropdown</li>
+<li>Token Name: "<strong>Synclias Cache Clear</strong>"</li>
+</ul>
+<p>4. Click <strong>Create</strong></p>
+<p>5. <strong>Note down the Token String.</strong> Once this window is closed there is no way to get the token displayed again</p>
+<p>6. Click <strong>Close</strong></p>
+<p><strong>Note:&nbsp;</strong>If the token is lost at any time or needs to be replaced, delete the token from the Sessions page and create another</p>
+<p>&nbsp;</p>
+
+{% endblock %}
