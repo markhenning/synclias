@@ -15,23 +15,26 @@ Easiest way, already built and ready!
 
 Instructions, compose and .env  are on [Docker Hub](https://hub.docker.com/repository/docker/mhenning/synclias/general)
 
-## Clone and Build it yourself
-# clone this repo
+## The longer way - Clone/Build Yourself
 
-# copy the env-sample file
-cp env-sample-docker .env
+#### Clone and Build it yourself
+- clone this repo
 
-# edit the .env file
+#### copy the env-sample file
+- cp env-sample-docker .env
+
+#### edit the .env file
 Set the following:
+```
     MARIADB_USERNAME - Any username you like for the database connection
     MARIADB_PASSWORD - Any password you like
     MARIADB_DATABASE - Any DB you want to use
     ENCRYPTION_KEY - This has to be a 32 char string of upper, lower and numbers (sorry, I know it's a pain, use a password generator)
     SECRET_KEY - Any length, use another string from your password generator
+```
 
-# 
 
-# Run!
+#### Run!
 docker compose -f docker-compose-build.yaml up
 
 (Add a "-d" to detach afterwards)
