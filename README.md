@@ -10,6 +10,8 @@ We then repeat the process on a set schedule.
 Instantly techy people will say "but that'll break", and yes, it doesn't work for some sites, and any site you can't view over a VPN definitely won't work, but in general, you'll find sites don't move about that often. At home, I run a sync every 24 hours and in 3 months, I've had to manually push the sync button once.
 
 
+** Please don't log any issues yet, stil beta for now and I've got a huge list**
+
 ## Docker Hub Image
 Easiest way, already built and ready!
 
