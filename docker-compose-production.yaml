@@ -28,6 +28,12 @@ services:
       - 8000:8000
     restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     stop_grace_period: ${DOCKER_STOP_GRACE_PERIOD:-3s}
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - --fail
+      - localhost:8000/
     links:
       - db
       - redis
