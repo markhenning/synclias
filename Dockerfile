@@ -14,7 +14,7 @@ ENV PYTHONDONAPP_HOMETWRITEBYTECODE=1
 ENV FLASK_ENV="${FLASK_ENV}"
 
 RUN apt-get update \
-  && apt-get install -y build-essential \
+  && apt-get install -y build-essential curl \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get purge -y --auto-remove\
